@@ -1,5 +1,9 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const axios  =  require('axios');
+
+const qs = require('querystring');
+
 const cookiesPath = "cookies.txt";
 
 (async () => {
@@ -17,23 +21,6 @@ const cookiesPath = "cookies.txt";
       }
     }  
   
-    
-  const cookies = [{
-    'name': 'JSESSIONID',
-    'value': '0AcgU031axuF1ChFW1mN3es42HuxuUKkPoOa79fL56qZd47B4zxmcDYI2IUutADd.cG9ydGFsX2RvbWFpbi9wZDM='
-  },{
-    'name': 'UID',
-    'value': 'wlsdn1962'
-  },{
-    'name': 'WMONID',
-    'value': 'Po4Sd1xhMNx'
-  },{
-    'name': 'WMONID',
-    'value': 'V-YgYU8aB_V'
-  },{
-    'name': 'pop13798',
-    'value': 'done'
-  }];
   await page.goto('https://dhlottery.co.kr/gameResult.do?method=statByNumber');
   await page.waitForSelector('#printTarget');
   
@@ -68,11 +55,26 @@ const cookiesPath = "cookies.txt";
         }
     }
    console.log('로또번호 ' ,lotto)
-   await page.goto('https://www.dhlottery.co.kr/common.do?method=main')
-   // Save Session Cookies
-//    await page.waitFor(10000);
-//     // Write Cookies
-//     const cookiesObject = await page.cookies()
-//     fs.writeFileSync(cookiesPath, JSON.stringify(cookiesObject));
-//     console.log('Session has been saved to ' + cookiesPath);
+  
+   
+   await page.goto('https://el.dhlottery.co.kr/game/TotalGame.jsp?LottoId=LO40');
+  //  await page.goto('https://www.dhlottery.co.kr/user.do?method=login&returnUrl=');
+  //  await page.waitFor(10000);
+  //   // Save Session Cookies
+
+  //   // Write Cookies
+  //   const cookiesObject = await page.cookies()
+  //   fs.writeFileSync(cookiesPath, JSON.stringify(cookiesObject));
+  //   console.log('Session has been saved to ' + cookiesPath);
+   const requestBody = {
+    'param' : '[{"number":"12,18,25,32,39,45"}]'
+  }
+  axios.defaults.headers.common['Cookie'] = 'JSESSIONID=PPBqEeJh5rwwbdQ21GaqXITNeW9j1yCfsM08yt1Y5hTvmvSS41FSInMV1WvpeU6f.cG9ydGFsX2RvbWFpbi9wZDE=;WMONID=V_i7hgQjcq4;'
+  axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+
+  console.log(qs.stringify(requestBody));
+   axios.post('https://ol.dhlottery.co.kr/olotto/game/insertMyGameNum.do',qs.stringify(requestBody))
+   .then((result)=>console.log(result))
+   .catch((error)=>console.log('에러 : ',error))
+  
 })();
