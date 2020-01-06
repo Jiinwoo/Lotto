@@ -1,6 +1,10 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const axios  =  require('axios');
+const dotenv = require('dotenv');
+
+
+dotenv.config();
 
 const qs = require('querystring');
 
@@ -9,17 +13,17 @@ const cookiesPath = "cookies.txt";
 (async () => {
     const browser = await puppeteer.launch({headless : false,slowMo: 250});
   const page = await browser.newPage();
-    const previousSession = fs.existsSync(cookiesPath)
-    if (previousSession) {
-      const content = fs.readFileSync(cookiesPath);
-      const cookiesArr = JSON.parse(content);
-      if (cookiesArr.length !== 0) {
-        for (let cookie of cookiesArr) {
-          await page.setCookie(cookie)
-        }
-        console.log('Session has been loaded in the browser')
-      }
-    }  
+    // const previousSession = fs.existsSync(cookiesPath)
+    // if (previousSession) {
+    //   const content = fs.readFileSync(cookiesPath);
+    //   const cookiesArr = JSON.parse(content);
+    //   if (cookiesArr.length !== 0) {
+    //     for (let cookie of cookiesArr) {
+    //       await page.setCookie(cookie)
+    //     }
+    //     console.log('Session has been loaded in the browser')
+    //   }
+    // }  
   
   await page.goto('https://dhlottery.co.kr/gameResult.do?method=statByNumber');
   await page.waitForSelector('#printTarget');
@@ -55,26 +59,31 @@ const cookiesPath = "cookies.txt";
         }
     }
    console.log('로또번호 ' ,lotto)
-  
+  console.log('string 된 숫자 : ' , lotto.join(','));
    
-   await page.goto('https://el.dhlottery.co.kr/game/TotalGame.jsp?LottoId=LO40');
-  //  await page.goto('https://www.dhlottery.co.kr/user.do?method=login&returnUrl=');
-  //  await page.waitFor(10000);
-  //   // Save Session Cookies
+  
+   await page.goto('https://www.dhlottery.co.kr/user.do?method=login&returnUrl=');
 
-  //   // Write Cookies
-  //   const cookiesObject = await page.cookies()
-  //   fs.writeFileSync(cookiesPath, JSON.stringify(cookiesObject));
-  //   console.log('Session has been saved to ' + cookiesPath);
+   await page.type('#userId', process.env.ID);
+    await page.type('input[type=password]:nth-child(2)', process.env.PASSWORD);
+    await page.waitFor(1000);
+    await page.click('div.form > a');
+    // Save Session Cookies
+
+    // Write Cookies
+    const cookiesObject = await page.cookies()
+    console.log('쿠키 : ' , cookiesObject);
+    fs.writeFileSync(cookiesPath, JSON.stringify(cookiesObject));
+    console.log('Session has been saved to ' + cookiesPath);
    const requestBody = {
-    'param' : '[{"number":"12,18,25,32,39,45"}]'
+    'param' : `[{"number":"${lotto.join(',')}"}]`
   }
-  axios.defaults.headers.common['Cookie'] = 'JSESSIONID=PPBqEeJh5rwwbdQ21GaqXITNeW9j1yCfsM08yt1Y5hTvmvSS41FSInMV1WvpeU6f.cG9ydGFsX2RvbWFpbi9wZDE=;WMONID=V_i7hgQjcq4;'
+  axios.defaults.headers.common['Cookie'] = `JSESSIONID=${cookiesObject[3].value};WMONID=${cookiesObject[1].value};`
   axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
   console.log(qs.stringify(requestBody));
    axios.post('https://ol.dhlottery.co.kr/olotto/game/insertMyGameNum.do',qs.stringify(requestBody))
    .then((result)=>console.log(result))
    .catch((error)=>console.log('에러 : ',error))
-  
+    await page.goto('https://el.dhlottery.co.kr/game/TotalGame.jsp?LottoId=LO40');
 })();
